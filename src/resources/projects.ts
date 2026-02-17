@@ -3,7 +3,8 @@ import { Schema } from "@effect/schema";
 import { PayArkConfigService, request } from "../http";
 import { ProjectSchema } from "../schemas";
 import { PayArkEffectError } from "../errors";
-import type { PayArkConfig, Project } from "@payark/sdk";
+import type { PayArkConfig } from "@payark/sdk";
+import type { Project } from "../schemas";
 import type { HttpClient } from "@effect/platform";
 import type { ParseResult } from "@effect/schema";
 

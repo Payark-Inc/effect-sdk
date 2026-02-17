@@ -14,6 +14,28 @@ export const ProviderSchema = Schema.Union(
   ),
 );
 
+// ── Branded Types ──────────────────────────────────────────────────────────
+
+/**
+ * Branded Type for Checkout Session ID.
+ */
+export const CheckoutSessionId = Schema.String.pipe(
+  Schema.brand("CheckoutSessionId"),
+);
+export type CheckoutSessionId = Schema.Schema.Type<typeof CheckoutSessionId>;
+
+/**
+ * Branded Type for Payment ID.
+ */
+export const PaymentId = Schema.String.pipe(Schema.brand("PaymentId"));
+export type PaymentId = Schema.Schema.Type<typeof PaymentId>;
+
+/**
+ * Branded Type for Project ID.
+ */
+export const ProjectId = Schema.String.pipe(Schema.brand("ProjectId"));
+export type ProjectId = Schema.Schema.Type<typeof ProjectId>;
+
 /**
  * Schema for creating a checkout session.
  */
@@ -34,7 +56,7 @@ export const CreateCheckoutSchema = Schema.Struct({
  * Schema for a checkout session response.
  */
 export const CheckoutSessionSchema = Schema.Struct({
-  id: Schema.String,
+  id: CheckoutSessionId,
   checkout_url: Schema.String,
   payment_method: Schema.Struct({
     type: ProviderSchema,
@@ -52,8 +74,8 @@ export const CheckoutSessionSchema = Schema.Struct({
  * Schema for a Payment response.
  */
 export const PaymentSchema = Schema.Struct({
-  id: Schema.String,
-  project_id: Schema.String,
+  id: PaymentId,
+  project_id: ProjectId,
   amount: Schema.Number,
   currency: Schema.String,
   status: Schema.Union(
@@ -76,7 +98,7 @@ export const PaymentSchema = Schema.Struct({
  * Schema for a Project response.
  */
 export const ProjectSchema = Schema.Struct({
-  id: Schema.String,
+  id: ProjectId,
   name: Schema.String,
   api_key_secret: Schema.String,
   created_at: Schema.String,
@@ -94,3 +116,17 @@ export const PaginatedResponseSchema = <A, I>(item: Schema.Schema<A, I>) =>
       offset: Schema.Number,
     }),
   });
+
+// ── Inferred Types ─────────────────────────────────────────────────────────
+
+export type CheckoutSession = Schema.Schema.Type<typeof CheckoutSessionSchema>;
+export type Payment = Schema.Schema.Type<typeof PaymentSchema>;
+export type Project = Schema.Schema.Type<typeof ProjectSchema>;
+export interface PaginatedResponse<T> {
+  readonly data: ReadonlyArray<T>;
+  readonly meta: {
+    readonly total: number | null;
+    readonly limit: number;
+    readonly offset: number;
+  };
+}

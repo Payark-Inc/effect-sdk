@@ -1,6 +1,6 @@
 # @payark/sdk-effect
 
-A high-performance, functional TypeScript SDK for [PayArk](https://payark.com), built natively on the [Effect](https://effect.website/) ecosystem.
+A high-performance, functional TypeScript SDK for [PayArk](https://payark-public-demo.vercel.app/), built natively on the [Effect](https://effect.website/) ecosystem.
 
 > **Native Effect** · **Type-safe** · **Runtime Validation** · **Zero Promise overhead**
 
@@ -10,6 +10,7 @@ A high-performance, functional TypeScript SDK for [PayArk](https://payark.com), 
 
 - **Effect-Native**: Built directly on `@effect/platform/HttpClient`. Returns pure `Effect` types without Promise wrappers.
 - **Strict Validation**: All API responses are parsed and validated at runtime using `@effect/schema`, ensuring your data is exactly what you expect.
+- **Branded Types**: IDs (e.g., `PaymentId`, `ProjectId`) are branded for compile-time safety, preventing mix-ups.
 - **Structured Errors**: Errors are typed as `PayArkEffectError`, a `TaggedError` that integrates seamlessly with `Effect.catchTag`.
 - **Tracing Ready**: Fully instrumented for observability with Effect's built-in tracing.
 - **Zero-Dependency Core**: Lightweight and tree-shakeable.

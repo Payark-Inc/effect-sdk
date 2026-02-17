@@ -3,11 +3,8 @@ import { Schema } from "@effect/schema";
 import { PayArkConfigService, request } from "../http";
 import { CheckoutSessionSchema } from "../schemas";
 import { PayArkEffectError } from "../errors";
-import type {
-  CreateCheckoutParams,
-  CheckoutSession,
-  PayArkConfig,
-} from "@payark/sdk";
+import type { CreateCheckoutParams, PayArkConfig } from "@payark/sdk";
+import type { CheckoutSession } from "../schemas";
 import type { HttpClient } from "@effect/platform";
 import type { ParseResult } from "@effect/schema";
 

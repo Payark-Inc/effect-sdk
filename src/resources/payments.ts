@@ -3,13 +3,8 @@ import { Schema } from "@effect/schema";
 import { PayArkConfigService, request } from "../http";
 import { PaymentSchema, PaginatedResponseSchema } from "../schemas";
 import { PayArkEffectError } from "../errors";
-import type {
-  PayArkConfig,
-  Project,
-  ListPaymentsParams,
-  PaginatedResponse,
-  Payment,
-} from "@payark/sdk";
+import type { PayArkConfig, ListPaymentsParams } from "@payark/sdk";
+import type { Payment, PaginatedResponse } from "../schemas";
 import type { HttpClient } from "@effect/platform";
 import type { ParseResult } from "@effect/schema";
 
