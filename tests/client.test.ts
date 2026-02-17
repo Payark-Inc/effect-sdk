@@ -2,6 +2,7 @@ import { describe, it, expect } from "bun:test";
 import { Effect, Layer, Exit, Cause, Option } from "effect";
 import { HttpClient, HttpClientResponse } from "@effect/platform";
 import { PayArkEffect, PayArk } from "../src/index";
+import { CheckoutSessionId, PaymentId } from "../src/schemas";
 import { PayArkEffectError } from "../src/errors";
 
 describe("PayArk SDK - Effect API High-Level", () => {
@@ -32,7 +33,7 @@ describe("PayArk SDK - Effect API High-Level", () => {
       .pipe(Effect.provide(Layer.succeed(HttpClient.HttpClient, MockClient)));
 
     const result = await Effect.runPromise(program);
-    expect(result.id).toBe("cs_123");
+    expect(result.id).toBe("cs_123" as CheckoutSessionId);
     expect(result.payment_method.type).toBe("esewa");
   });
 
@@ -69,7 +70,7 @@ describe("PayArk SDK - Effect API High-Level", () => {
 
     const result = await Effect.runPromise(program);
     expect(result.data).toHaveLength(1);
-    expect(result.data[0].id).toBe("pay_1");
+    expect(result.data[0].id).toBe("pay_1" as PaymentId);
     expect(result.meta.total).toBe(1);
   });
 
@@ -160,7 +161,7 @@ describe("PayArk SDK - Effect API High-Level", () => {
       );
 
       const result = await Effect.runPromise(runnable);
-      expect(result.id).toBe("cs_context");
+      expect(result.id).toBe("cs_context" as CheckoutSessionId);
     });
   });
 });
