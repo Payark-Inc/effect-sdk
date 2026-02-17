@@ -2,7 +2,7 @@ import { Effect, Context } from "effect";
 import { HttpClient, HttpClientRequest } from "@effect/platform";
 import { PayArkEffectError } from "./errors";
 import { SDK_VERSION } from "@payark/sdk";
-import type { PayArkConfig } from "@payark/sdk";
+import type { PayArkConfig, PayArkErrorCode } from "@payark/sdk";
 
 /**
  * Service tag for the PayArk configuration.
@@ -125,7 +125,7 @@ export const request = <T>(
     );
   });
 
-function mapStatusToCode(status: number): any {
+function mapStatusToCode(status: number): PayArkErrorCode {
   if (status === 401) return "authentication_error";
   if (status === 403) return "permission_error";
   if (status === 400 || status === 422) return "invalid_request_error";

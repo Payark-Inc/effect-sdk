@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { Schema } from "@effect/schema";
 import { PayArkConfigService, request } from "../http";
 import { PaymentSchema, PaginatedResponseSchema } from "../schemas";
+import { PayArkEffectError } from "../errors";
 import type {
   PayArkConfig,
   Project,
@@ -10,6 +11,7 @@ import type {
   Payment,
 } from "@payark/sdk";
 import type { HttpClient } from "@effect/platform";
+import type { ParseResult } from "@effect/schema";
 
 /**
  * Effect-based resource for PayArk Payments.
@@ -25,8 +27,12 @@ export class PaymentsEffect {
    */
   list(
     params: ListPaymentsParams = {},
-  ): Effect.Effect<PaginatedResponse<Payment>, any, HttpClient.HttpClient> {
-    return request<any>("GET", "/v1/payments", {
+  ): Effect.Effect<
+    PaginatedResponse<Payment>,
+    PayArkEffectError | ParseResult.ParseError,
+    HttpClient.HttpClient
+  > {
+    return request<unknown>("GET", "/v1/payments", {
       query: {
         limit: params.limit,
         offset: params.offset,
@@ -37,7 +43,7 @@ export class PaymentsEffect {
         Schema.decodeUnknown(PaginatedResponseSchema(PaymentSchema)),
       ),
       Effect.provideService(PayArkConfigService, this.config),
-    ) as any;
+    );
   }
 
   /**
@@ -46,10 +52,19 @@ export class PaymentsEffect {
    * @param id - The payment identifier.
    * @returns Effect that resolves to the payment object.
    */
-  retrieve(id: string): Effect.Effect<Payment, any, HttpClient.HttpClient> {
-    return request<any>("GET", `/v1/payments/${encodeURIComponent(id)}`).pipe(
+  retrieve(
+    id: string,
+  ): Effect.Effect<
+    Payment,
+    PayArkEffectError | ParseResult.ParseError,
+    HttpClient.HttpClient
+  > {
+    return request<unknown>(
+      "GET",
+      `/v1/payments/${encodeURIComponent(id)}`,
+    ).pipe(
       Effect.flatMap(Schema.decodeUnknown(PaymentSchema)),
       Effect.provideService(PayArkConfigService, this.config),
-    ) as any;
+    );
   }
 }

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { Schema } from "@effect/schema";
 import { PayArkConfigService, request } from "../http";
 import { CheckoutSessionSchema } from "../schemas";
+import { PayArkEffectError } from "../errors";
 import type {
   CreateCheckoutParams,
   CheckoutSession,
@@ -24,10 +25,14 @@ export class CheckoutEffect {
    */
   create(
     params: CreateCheckoutParams,
-  ): Effect.Effect<CheckoutSession, any, HttpClient.HttpClient> {
-    return request<any>("POST", "/v1/checkout", { body: params }).pipe(
+  ): Effect.Effect<
+    CheckoutSession,
+    PayArkEffectError | ParseResult.ParseError,
+    HttpClient.HttpClient
+  > {
+    return request<unknown>("POST", "/v1/checkout", { body: params }).pipe(
       Effect.flatMap(Schema.decodeUnknown(CheckoutSessionSchema)),
       Effect.provideService(PayArkConfigService, this.config),
-    ) as any;
+    );
   }
 }
