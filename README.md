@@ -1,6 +1,6 @@
 # @payark/sdk-effect
 
-A high-performance, functional TypeScript SDK for [PayArk](https://payark.com), built natively on the [Effect](https://effect.website/) ecosystem.
+A high-performance, functional TypeScript SDK for [PayArk](https://payark-public-demo.vercel.app/), built natively on the [Effect](https://effect.website/) ecosystem.
 
 > **Native Effect** · **Type-safe** · **Runtime Validation** · **Zero Promise overhead** · **Branded Types**
 
@@ -95,13 +95,13 @@ Effect.runPromise(runnable);
 
 The `PayArkConfig` object accepts:
 
-| Option       | Type      | Default                  | Description                                         |
-| ------------ | --------- | ------------------------ | --------------------------------------------------- |
-| `apiKey`     | `string`  | **Required**             | Your project's secret key (`sk_...`).               |
-| `sandbox`    | `boolean` | `false`                  | Enable Sandbox Mode for testing without real money. |
-| `baseUrl`    | `string`  | `https://api.payark.com` | Override for local dev or proxy.                    |
-| `timeout`    | `number`  | `30000`                  | Request timeout in ms.                              |
-| `maxRetries` | `number`  | `2`                      | Automatic retries on 5xx errors.                    |
+| Option       | Type      | Default                             | Description                                         |
+| ------------ | --------- | ----------------------------------- | --------------------------------------------------- |
+| `apiKey`     | `string`  | **Required**                        | Your project's secret key (`sk_...`).               |
+| `sandbox`    | `boolean` | `false`                             | Enable Sandbox Mode for testing without real money. |
+| `baseUrl`    | `string`  | `payark-api.codimo-dev.workers.dev` | Override for local dev or proxy.                    |
+| `timeout`    | `number`  | `30000`                             | Request timeout in ms.                              |
+| `maxRetries` | `number`  | `2`                                 | Automatic retries on 5xx errors.                    |
 
 ## Branded Types & Validation
 

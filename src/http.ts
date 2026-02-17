@@ -32,10 +32,9 @@ export const request = <T>(
     const config = yield* _(PayArkConfigService);
     const client = yield* _(HttpClient.HttpClient);
 
-    const baseUrl = (config.baseUrl ?? "https://api.payark.com").replace(
-      /\/+$/,
-      "",
-    );
+    const baseUrl = (
+      config.baseUrl ?? "https://payark-api.codimo-dev.workers.dev"
+    ).replace(/\/+$/, "");
     const url = new URL(`${baseUrl}${path}`);
 
     if (options?.query) {
