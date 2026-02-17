@@ -1,8 +1,8 @@
 # @payark/sdk-effect
 
-A high-performance, functional TypeScript SDK for [PayArk](https://payark-public-demo.vercel.app/), built natively on the [Effect](https://effect.website/) ecosystem.
+A high-performance, functional TypeScript SDK for [PayArk](https://payark.com), built natively on the [Effect](https://effect.website/) ecosystem.
 
-> **Native Effect** · **Type-safe** · **Runtime Validation** · **Zero Promise overhead**
+> **Native Effect** · **Type-safe** · **Runtime Validation** · **Zero Promise overhead** · **Branded Types**
 
 ---
 
@@ -10,41 +10,42 @@ A high-performance, functional TypeScript SDK for [PayArk](https://payark-public
 
 - **Effect-Native**: Built directly on `@effect/platform/HttpClient`. Returns pure `Effect` types without Promise wrappers.
 - **Strict Validation**: All API responses are parsed and validated at runtime using `@effect/schema`, ensuring your data is exactly what you expect.
-- **Branded Types**: IDs (e.g., `PaymentId`, `ProjectId`) are branded for compile-time safety, preventing mix-ups.
+- **Branded Types**: IDs (e.g., `PaymentId`, `ProjectId`) are branded for compile-time safety, preventing mix-ups between different ID types.
 - **Structured Errors**: Errors are typed as `PayArkEffectError`, a `TaggedError` that integrates seamlessly with `Effect.catchTag`.
+- **Dependency Injection**: First-class support for `Layer` and `Context` for easy testing and modular architecture.
 - **Tracing Ready**: Fully instrumented for observability with Effect's built-in tracing.
-- **Zero-Dependency Core**: Lightweight and tree-shakeable.
 
 ## Installation
 
 ```bash
 # bun
-bun add @payark/sdk-effect
+bun add @payark/sdk-effect effect @effect/schema @effect/platform
 
 # npm
-npm install @payark/sdk-effect
+npm install @payark/sdk-effect effect @effect/schema @effect/platform
+
+# pnpm
+pnpm add @payark/sdk-effect effect @effect/schema @effect/platform
 ```
 
-> **Note**: This package requires `effect` as a peer dependency.
-
 ## Quick Start
+
+### 1. Basic Usage
+
+If you just want to run a script:
 
 ```ts
 import { Effect, Console } from "effect";
 import { PayArkEffect } from "@payark/sdk-effect";
 
-// 1. Initialize the client
-const payark = new PayArkEffect({
-  apiKey: "sk_live_...",
-  // optional: baseUrl, timeout, etc.
-});
+// Initialize the client
+const payark = new PayArkEffect({ apiKey: "sk_live_..." });
 
-// 2. Define your program
 const program = Effect.gen(function* (_) {
   // Create a checkout session
   const session = yield* _(
     payark.checkout.create({
-      amount: 1000, // NPR 1000
+      amount: 1000,
       provider: "esewa",
       returnUrl: "https://your-site.com/success",
     }),
@@ -52,35 +53,76 @@ const program = Effect.gen(function* (_) {
 
   yield* _(Console.log(`Checkout created: ${session.checkout_url}`));
 
-  // Retrieve payment details later
-  const payment = yield* _(
-    payark.payments.retrieve(session.id.replace("ch_", "pay_")),
-  );
-
-  return payment;
+  // Access safely typed IDs
+  // session.id is type `CheckoutSessionId`, not just `string`
 });
 
-// 3. Run safely
-const result = await Effect.runPromise(
-  program.pipe(
-    Effect.catchTag("PayArkEffectError", (err) =>
-      Console.error(`Payment failed: ${err.message} (${err.code})`),
-    ),
-  ),
-);
+// Run it
+Effect.runPromise(program);
 ```
 
-## API Reference
+### 2. Dependency Injection (Recommended)
 
-### Resources
+For larger applications, use the `PayArk` service tag and `PayArk.Live` layer.
 
-- **`payark.checkout`**: Create hosted payment sessions.
-- **`payark.payments`**: List and retrieve payment records.
-- **`payark.projects`**: Manage project settings (requires PAT).
+```ts
+import { Effect, Layer, Console } from "effect";
+import { PayArk, PayArkConfig } from "@payark/sdk-effect";
 
-### Types & Schemas
+// Define a program that depends on PayArk
+const program = Effect.gen(function* (_) {
+  // Access the service from context
+  const client = yield* _(PayArk);
 
-We export all Zod-like schemas for runtime validation if you need them independently:
+  const payments = yield* _(client.payments.list({ limit: 5 }));
+
+  yield* _(Console.log(`Found ${payments.meta.total} payments`));
+});
+
+// Configure the layer
+const PayArkLive = PayArk.Live({
+  apiKey: process.env.PAYARK_API_KEY!,
+  sandbox: true, // Enable sandbox mode
+});
+
+// Provide the layer to the program
+const runnable = program.pipe(Effect.provide(PayArkLive));
+
+Effect.runPromise(runnable);
+```
+
+## Configuration
+
+The `PayArkConfig` object accepts:
+
+| Option       | Type      | Default                  | Description                                         |
+| ------------ | --------- | ------------------------ | --------------------------------------------------- |
+| `apiKey`     | `string`  | **Required**             | Your project's secret key (`sk_...`).               |
+| `sandbox`    | `boolean` | `false`                  | Enable Sandbox Mode for testing without real money. |
+| `baseUrl`    | `string`  | `https://api.payark.com` | Override for local dev or proxy.                    |
+| `timeout`    | `number`  | `30000`                  | Request timeout in ms.                              |
+| `maxRetries` | `number`  | `2`                      | Automatic retries on 5xx errors.                    |
+
+## Branded Types & Validation
+
+This SDK uses **Branded Types** to prevent logic errors. You cannot accidentally pass a `PaymentId` to a function expecting a `ProjectId`.
+
+```ts
+import { PaymentId, ProjectId } from "@payark/sdk-effect";
+
+const payId = "pay_123" as PaymentId; // In real code, this comes from API
+const projId = "proj_456" as ProjectId;
+
+// ❌ Compile Error: Argument of type 'ProjectId' is not assignable to parameter of type 'PaymentId'.
+client.payments.retrieve(projId);
+
+// ✅ Correct
+client.payments.retrieve(payId);
+```
+
+### Schemas
+
+We export all `@effect/schema` definitions for your use:
 
 ```ts
 import { PaymentSchema } from "@payark/sdk-effect";
@@ -91,39 +133,47 @@ const isPayment = Schema.is(PaymentSchema);
 
 ## Error Handling
 
-All methods return an `Effect<Success, Error, Requirements>`. The error channel is strictly typed.
+Errors are fully typed using `PayArkEffectError`. You can handle them exhaustively using `Effect.catchTag`.
 
 ```ts
+import { Effect, Console } from "effect";
 import { PayArkEffectError } from "@payark/sdk-effect";
-import { Effect } from "effect";
-
-// ...
 
 program.pipe(
-  Effect.catchTag("PayArkEffectError", (error) => {
-    // error is fully typed
-    console.error(error.statusCode); // 400, 401, etc.
-    console.error(error.code); // "authentication_error", "invalid_request_error"
-    return Effect.succeed(null);
-  }),
-  Effect.catchTag("ParseError", (error) => {
-    // Handle schema validation errors (e.g. API changed shape)
-    console.error("Response validation failed", error);
-    return Effect.die(error);
+  Effect.catchTag("PayArkEffectError", (err) => {
+    switch (err.code) {
+      case "authentication_error":
+        return Console.error("Check your API Key!");
+      case "rate_limit_error":
+        return Console.error("Slow down!");
+      default:
+        return Console.error(`Something went wrong: ${err.message}`);
+    }
   }),
 );
 ```
 
-## Configuration & Testing
+## Testing
 
-You can interact with the underlying `HttpClient` by providing layers. This is useful for testing or custom networking requirements.
+Because the SDK is built on `Context` and `Layer`, mocking is trivial. You don't need network mocks; you can just provide a test layer.
 
 ```ts
-import { PayArkEffect } from "@payark/sdk-effect";
-import { HttpClient } from "@effect/platform";
+import { PayArk } from "@payark/sdk-effect";
+import { Layer } from "effect";
 
-// The SDK uses the default HttpClient by default, but you can provide your own context.
-// (Advanced usage for testing mocking)
+// Create a mock implementation
+const MockPayArk = Layer.succeed(
+  PayArk,
+  {
+    checkout: {
+      create: () =>
+        Effect.succeed({ id: "cs_mock", checkout_url: "http://mock" }),
+    },
+  } as any, // Cast to partial implementation for simplicity
+);
+
+// Run test with mock
+program.pipe(Effect.provide(MockPayArk));
 ```
 
 ## License
