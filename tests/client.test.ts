@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { Effect, Layer, Exit, Cause, Option } from "effect";
 import { HttpClient, HttpClientResponse } from "@effect/platform";
-import { PayArkEffect } from "../src/index";
+import { PayArkEffect, PayArk } from "../src/index";
 import { PayArkEffectError } from "../src/errors";
 
 describe("PayArk SDK - Effect API High-Level", () => {
@@ -123,5 +123,44 @@ describe("PayArk SDK - Effect API High-Level", () => {
 
     const result = await Effect.runPromiseExit(program);
     expect(Exit.isFailure(result)).toBe(true);
+  });
+
+  describe("PayArk SDK - Service API", () => {
+    it("should provide client via Context", async () => {
+      const mockResponse = {
+        id: "cs_context",
+        checkout_url: "https://pay.ark/cs_context",
+        payment_method: { type: "esewa" },
+      };
+      const MockClient = HttpClient.make((req) =>
+        Effect.succeed(
+          HttpClientResponse.fromWeb(
+            req,
+            new Response(JSON.stringify(mockResponse)),
+          ),
+        ),
+      );
+
+      // Using Effect.gen with PayArk service
+      const program = Effect.gen(function* (_) {
+        const payark = yield* _(PayArk);
+        return yield* _(
+          payark.checkout.create({
+            amount: 500,
+            provider: "esewa",
+            returnUrl: "https://example.com/context",
+          }),
+        );
+      });
+
+      // Provide dependencies
+      const runnable = program.pipe(
+        Effect.provide(PayArk.Live({ apiKey: "sk_test_context" })),
+        Effect.provide(Layer.succeed(HttpClient.HttpClient, MockClient)),
+      );
+
+      const result = await Effect.runPromise(runnable);
+      expect(result.id).toBe("cs_context");
+    });
   });
 });

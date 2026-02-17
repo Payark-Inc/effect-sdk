@@ -36,10 +36,10 @@
     "devDependencies": {
         "tsup": "^8.0.0",
         "typescript": "^5.7.0",
-        "@types/node": "^20.0.0",
-        "@payark/sdk": "workspace:*"
+        "@types/node": "^20.0.0"
     },
     "dependencies": {
+        "@payark/sdk": "workspace:*",
         "@effect/platform": "^0.94.5",
         "@effect/platform-node": "^0.104.1",
         "@effect/schema": "^0.75.5",

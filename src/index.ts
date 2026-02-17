@@ -1,3 +1,4 @@
+import { Context, Layer } from "effect";
 import { CheckoutEffect } from "./resources/checkout";
 import { PaymentsEffect } from "./resources/payments";
 import { ProjectsEffect } from "./resources/projects";
@@ -42,6 +43,20 @@ export class PayArkEffect {
     }
     return this._projects;
   }
+}
+
+/**
+ * Service tag for the PayArk API.
+ */
+export class PayArk extends Context.Tag("@payark/sdk-effect/PayArk")<
+  PayArk,
+  PayArkEffect
+>() {
+  /**
+   * Create a Layer that provides the PayArk service.
+   */
+  static readonly Live = (config: PayArkConfig) =>
+    Layer.succeed(PayArk, new PayArkEffect(config));
 }
 
 export { PayArkEffectError } from "./errors";
