@@ -95,13 +95,13 @@ Effect.runPromise(runnable);
 
 The `PayArkConfig` object accepts:
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `apiKey` | `string` | **Required** | Your project's secret key (`sk_...`). |
-| `sandbox` | `boolean` | `false` | Enable Sandbox Mode for testing without real money. |
-| `baseUrl` | `string` | `payark-api.codimo-dev.workers.dev` | Override for local dev or proxy. |
-| `timeout` | `number` | `30000` | Request timeout in ms. |
-| `maxRetries` | `number` | `2` | Automatic retries on 5xx errors. |
+| Option       | Type      | Default                             | Description                                         |
+| ------------ | --------- | ----------------------------------- | --------------------------------------------------- |
+| `apiKey`     | `string`  | **Required**                        | Your project's secret key (`sk_...`).               |
+| `sandbox`    | `boolean` | `false`                             | Enable Sandbox Mode for testing without real money. |
+| `baseUrl`    | `string`  | `payark-api.codimo-dev.workers.dev` | Override for local dev or proxy.                    |
+| `timeout`    | `number`  | `30000`                             | Request timeout in ms.                              |
+| `maxRetries` | `number`  | `2`                                 | Automatic retries on 5xx errors.                    |
 
 ## Branded Types & Validation
 
