@@ -1,11 +1,36 @@
-import { Context, Layer } from "effect";
+import { Context, Layer, Effect } from "effect";
+import { HttpApiClient, HttpClient } from "@effect/platform";
+import { PayArkApi, SecurityMiddleware } from "./api-spec";
+import type { PayArkConfig } from "@payark/sdk";
 import { CheckoutEffect } from "./resources/checkout";
 import { PaymentsEffect } from "./resources/payments";
 import { ProjectsEffect } from "./resources/projects";
-import type { PayArkConfig } from "@payark/sdk";
 
 /**
- * Main entry point for the Effect-based PayArk API.
+ * The Industrial SDK Client.
+ * Automatically derived from the PayArk HttpApi specification.
+ *
+ * This provides perfect type-sync between the server and client.
+ */
+export const makeClient = (options?: {
+  readonly baseUrl?: string;
+  readonly httpClient?: HttpClient.HttpClient;
+}) => HttpApiClient.make(PayArkApi, options);
+
+/**
+ * Service Tag for the Industrial Client.
+ */
+export class PayArkClient extends Context.Tag(
+  "@payark/sdk-effect/PayArkClient",
+)<PayArkClient, Effect.Effect.Success<ReturnType<typeof makeClient>>>() {
+  static readonly Live = (options?: {
+    readonly baseUrl?: string;
+    readonly httpClient?: HttpClient.HttpClient;
+  }) => Layer.effect(PayArkClient, makeClient(options));
+}
+
+/**
+ * Main entry point for the Effect-based PayArk API (Legacy wrapper).
  */
 export class PayArkEffect {
   private _checkout?: CheckoutEffect;
@@ -46,7 +71,7 @@ export class PayArkEffect {
 }
 
 /**
- * Service tag for the PayArk API.
+ * Service tag for the PayArk API (Legacy).
  */
 export class PayArk extends Context.Tag("@payark/sdk-effect/PayArk")<
   PayArk,
@@ -59,6 +84,7 @@ export class PayArk extends Context.Tag("@payark/sdk-effect/PayArk")<
     Layer.succeed(PayArk, new PayArkEffect(config));
 }
 
+export * from "./api-spec";
 export { PayArkEffectError } from "./errors";
 export * from "./schemas";
 export type {
