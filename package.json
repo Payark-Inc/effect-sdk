@@ -10,6 +10,11 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs",
             "require": "./dist/index.js"
+        },
+        "./api-spec": {
+            "types": "./src/api-spec.ts",
+            "import": "./src/api-spec.ts",
+            "default": "./src/api-spec.ts"
         }
     },
     "files": [
