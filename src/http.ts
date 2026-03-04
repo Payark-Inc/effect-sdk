@@ -1,8 +1,10 @@
 import { Effect, Context } from "effect";
 import { HttpClient, HttpClientRequest } from "@effect/platform";
-import { PayArkEffectError } from "./errors";
-import { SDK_VERSION } from "@payark/sdk";
-import type { PayArkConfig, PayArkErrorCode } from "@payark/sdk";
+import { PayArkEffectError, type PayArkErrorCode } from "./errors";
+import { PayArkConfig } from "./schemas";
+
+/** SDK version string for runtime introspection. */
+export const SDK_VERSION = "0.1.0" as const;
 
 /**
  * Service tag for the PayArk configuration.

@@ -1,6 +1,21 @@
 import { Data } from "effect";
-import type { PayArkErrorCode, PayArkErrorBody } from "@payark/sdk";
 
+/** Machine-readable error codes. */
+export type PayArkErrorCode =
+  | "authentication_error"
+  | "permission_error"
+  | "invalid_request_error"
+  | "not_found_error"
+  | "rate_limit_error"
+  | "api_error"
+  | "connection_error"
+  | "unknown_error";
+
+/** Raw error payload from the API. */
+export interface PayArkErrorBody {
+  readonly error: string;
+  readonly details?: any;
+}
 /**
  * Effect-compatible error class for PayArk SDK.
  * Extends Data.TaggedError for easy matching in Effect.catchTag.
