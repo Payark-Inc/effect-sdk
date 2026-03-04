@@ -1,12 +1,12 @@
-import { Effect } from "effect";
-import { Schema } from "@effect/schema";
+import { Schema, ParseResult, Effect } from "effect";
 import { PayArkConfigService, request } from "../http";
-import { CheckoutSessionSchema } from "../schemas";
+import {
+  CheckoutSession,
+  PayArkConfig,
+  CreateCheckoutParams,
+} from "../schemas";
 import { PayArkEffectError } from "../errors";
-import type { CreateCheckoutParams, PayArkConfig } from "@payark/sdk";
-import type { CheckoutSession } from "../schemas";
 import type { HttpClient } from "@effect/platform";
-import type { ParseResult } from "@effect/schema";
 
 /**
  * Effect-based resource for PayArk Checkout.
@@ -28,7 +28,7 @@ export class CheckoutEffect {
     HttpClient.HttpClient
   > {
     return request<unknown>("POST", "/v1/checkout", { body: params }).pipe(
-      Effect.flatMap(Schema.decodeUnknown(CheckoutSessionSchema)),
+      Effect.flatMap(Schema.decodeUnknown(CheckoutSession)),
       Effect.provideService(PayArkConfigService, this.config),
     );
   }

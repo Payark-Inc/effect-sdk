@@ -1,7 +1,7 @@
 import { Context, Layer, Effect } from "effect";
 import { HttpApiClient, HttpClient } from "@effect/platform";
-import { PayArkApi, SecurityMiddleware } from "./api-spec";
-import type { PayArkConfig } from "@payark/sdk";
+import { PayArkApi } from "./api-spec";
+import type { PayArkConfig } from "./schemas";
 import { CheckoutEffect } from "./resources/checkout";
 import { PaymentsEffect } from "./resources/payments";
 import { ProjectsEffect } from "./resources/projects";
@@ -87,18 +87,3 @@ export class PayArk extends Context.Tag("@payark/sdk-effect/PayArk")<
 export * from "./api-spec";
 export { PayArkEffectError } from "./errors";
 export * from "./schemas";
-export type {
-  PayArkConfig,
-  CheckoutSession,
-  Payment,
-  PaymentStatus,
-  Project,
-  ListPaymentsParams,
-  PaginatedResponse,
-  PaginationMeta,
-  Provider,
-  WebhookEvent,
-  WebhookEventType,
-  PayArkErrorBody,
-  PayArkErrorCode,
-} from "@payark/sdk";

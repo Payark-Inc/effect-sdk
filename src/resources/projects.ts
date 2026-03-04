@@ -1,12 +1,8 @@
-import { Effect } from "effect";
-import { Schema } from "@effect/schema";
+import { Schema, ParseResult, Effect } from "effect";
 import { PayArkConfigService, request } from "../http";
-import { ProjectSchema } from "../schemas";
+import { Project, PayArkConfig } from "../schemas";
 import { PayArkEffectError } from "../errors";
-import type { PayArkConfig } from "@payark/sdk";
-import type { Project } from "../schemas";
 import type { HttpClient } from "@effect/platform";
-import type { ParseResult } from "@effect/schema";
 
 /**
  * Effect-based resource for PayArk Projects.
@@ -25,7 +21,7 @@ export class ProjectsEffect {
     HttpClient.HttpClient
   > {
     return request<unknown>("GET", "/v1/projects").pipe(
-      Effect.flatMap(Schema.decodeUnknown(Schema.Array(ProjectSchema))),
+      Effect.flatMap(Schema.decodeUnknown(Schema.Array(Project))),
       Effect.provideService(PayArkConfigService, this.config),
     );
   }

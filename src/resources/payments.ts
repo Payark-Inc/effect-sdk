@@ -1,12 +1,13 @@
-import { Effect } from "effect";
-import { Schema } from "@effect/schema";
+import { Schema, ParseResult, Effect } from "effect";
 import { PayArkConfigService, request } from "../http";
-import { PaymentSchema, PaginatedResponseSchema } from "../schemas";
+import {
+  Payment,
+  PaginatedResponse,
+  PayArkConfig,
+  ListPaymentsParams,
+} from "../schemas";
 import { PayArkEffectError } from "../errors";
-import type { PayArkConfig, ListPaymentsParams } from "@payark/sdk";
-import type { Payment, PaginatedResponse } from "../schemas";
 import type { HttpClient } from "@effect/platform";
-import type { ParseResult } from "@effect/schema";
 
 /**
  * Effect-based resource for PayArk Payments.
@@ -34,9 +35,7 @@ export class PaymentsEffect {
         projectId: params.projectId,
       },
     }).pipe(
-      Effect.flatMap(
-        Schema.decodeUnknown(PaginatedResponseSchema(PaymentSchema)),
-      ),
+      Effect.flatMap(Schema.decodeUnknown(PaginatedResponse(Payment))),
       Effect.provideService(PayArkConfigService, this.config),
     );
   }
@@ -58,7 +57,7 @@ export class PaymentsEffect {
       "GET",
       `/v1/payments/${encodeURIComponent(id)}`,
     ).pipe(
-      Effect.flatMap(Schema.decodeUnknown(PaymentSchema)),
+      Effect.flatMap(Schema.decodeUnknown(Payment)),
       Effect.provideService(PayArkConfigService, this.config),
     );
   }

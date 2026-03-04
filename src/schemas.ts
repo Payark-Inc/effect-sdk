@@ -1,132 +1,316 @@
-import { Schema } from "@effect/schema";
+import { Schema } from "effect";
 
 /**
- * Supported payment providers on the PayArk platform.
+ * ── Branded Types ──
  */
-export const ProviderSchema = Schema.Union(
-  Schema.Literal(
-    "esewa",
-    "khalti",
-    "connectips",
-    "imepay",
-    "fonepay",
-    "sandbox",
-  ),
-);
-
-// ── Branded Types ──────────────────────────────────────────────────────────
-
-/**
- * Branded Type for Checkout Session ID.
- */
+export const Id = Schema.String.pipe(Schema.brand("Id"));
+export const ProjectId = Schema.String.pipe(Schema.brand("ProjectId"));
+export const PaymentId = Schema.String.pipe(Schema.brand("PaymentId"));
 export const CheckoutSessionId = Schema.String.pipe(
   Schema.brand("CheckoutSessionId"),
 );
-export type CheckoutSessionId = Schema.Schema.Type<typeof CheckoutSessionId>;
+export const SubscriptionId = Schema.String.pipe(
+  Schema.brand("SubscriptionId"),
+);
+export const CustomerId = Schema.String.pipe(Schema.brand("CustomerId"));
+export const TokenId = Schema.String.pipe(Schema.brand("TokenId"));
 
-/**
- * Branded Type for Payment ID.
- */
-export const PaymentId = Schema.String.pipe(Schema.brand("PaymentId"));
-export type PaymentId = Schema.Schema.Type<typeof PaymentId>;
-
-/**
- * Branded Type for Project ID.
- */
-export const ProjectId = Schema.String.pipe(Schema.brand("ProjectId"));
+export type Id = Schema.Schema.Type<typeof Id>;
 export type ProjectId = Schema.Schema.Type<typeof ProjectId>;
+export type PaymentId = Schema.Schema.Type<typeof PaymentId>;
+export type CheckoutSessionId = Schema.Schema.Type<typeof CheckoutSessionId>;
+export type SubscriptionId = Schema.Schema.Type<typeof SubscriptionId>;
+export type CustomerId = Schema.Schema.Type<typeof CustomerId>;
+export type TokenId = Schema.Schema.Type<typeof TokenId>;
 
 /**
- * Schema for creating a checkout session.
+ * ── Atomic Atoms ──
  */
-export const CreateCheckoutSchema = Schema.Struct({
+export const Email = Schema.String.pipe(
+  Schema.filter((s) => s.includes("@")),
+  Schema.brand("Email"),
+);
+export type Email = Schema.Schema.Type<typeof Email>;
+
+export const Timestamp = Schema.String.pipe(Schema.brand("Timestamp"));
+export type Timestamp = Schema.Schema.Type<typeof Timestamp>;
+
+export const Metadata = Schema.Record({
+  key: Schema.String,
+  value: Schema.Any,
+});
+export type Metadata = Schema.Schema.Type<typeof Metadata>;
+
+export const Timestamps = Schema.Struct({
+  created_at: Timestamp,
+  updated_at: Timestamp,
+});
+export type Timestamps = Schema.Schema.Type<typeof Timestamps>;
+
+/**
+ * ── Enums ──
+ */
+export const Provider = Schema.Literal(
+  "esewa",
+  "khalti",
+  "connectips",
+  "imepay",
+  "fonepay",
+  "sandbox",
+);
+export type Provider = Schema.Schema.Type<typeof Provider>;
+
+export const PaymentStatus = Schema.Literal("pending", "success", "failed");
+export type PaymentStatus = Schema.Schema.Type<typeof PaymentStatus>;
+
+export const SubscriptionStatus = Schema.Literal(
+  "active",
+  "past_due",
+  "canceled",
+  "paused",
+);
+export type SubscriptionStatus = Schema.Schema.Type<typeof SubscriptionStatus>;
+
+export const SubscriptionInterval = Schema.Literal("month", "year", "week");
+export type SubscriptionInterval = Schema.Schema.Type<
+  typeof SubscriptionInterval
+>;
+
+/**
+ * ── Models ──
+ */
+
+export const Customer = Schema.Struct({
+  id: CustomerId,
+  merchant_customer_id: Schema.String,
+  email: Schema.NullOr(Email),
+  name: Schema.NullOr(Schema.String),
+  phone: Schema.NullOr(Schema.String),
+  project_id: ProjectId,
+  metadata: Schema.NullOr(Metadata),
+  created_at: Timestamp,
+  updated_at: Schema.optional(Timestamp),
+});
+export type Customer = Schema.Schema.Type<typeof Customer>;
+
+export const Payment = Schema.Struct({
+  id: PaymentId,
+  project_id: ProjectId,
   amount: Schema.Number,
-  currency: Schema.optionalWith(Schema.String, {
-    default: () => "NPR" as const,
-  }),
-  provider: ProviderSchema,
+  currency: Schema.String,
+  status: PaymentStatus,
+  provider_ref: Schema.optional(Schema.NullOr(Schema.String)),
+  metadata_json: Schema.optional(Schema.NullOr(Metadata)),
+  gateway_response: Schema.optional(Schema.NullOr(Schema.Any)),
+  created_at: Timestamp,
+  updated_at: Schema.optional(Timestamp),
+});
+export type Payment = Schema.Schema.Type<typeof Payment>;
+
+export const Subscription = Schema.Struct({
+  id: SubscriptionId,
+  project_id: ProjectId,
+  customer_id: CustomerId,
+  status: SubscriptionStatus,
+  amount: Schema.Number,
+  currency: Schema.String,
+  interval: SubscriptionInterval,
+  interval_count: Schema.Number,
+  current_period_start: Timestamp,
+  current_period_end: Timestamp,
+  payment_link: Schema.String,
+  auto_send_link: Schema.Boolean,
+  metadata: Schema.optional(Schema.NullOr(Metadata)),
+  canceled_at: Schema.optional(Schema.NullOr(Timestamp)),
+  created_at: Timestamp,
+  updated_at: Schema.optional(Timestamp),
+});
+export type Subscription = Schema.Schema.Type<typeof Subscription>;
+
+export const Project = Schema.Struct({
+  id: ProjectId,
+  name: Schema.String,
+  api_key_secret: Schema.String,
+  created_at: Timestamp,
+});
+export type Project = Schema.Schema.Type<typeof Project>;
+
+export const Token = Schema.Struct({
+  id: TokenId,
+  name: Schema.String,
+  scopes: Schema.Array(Schema.String),
+  last_used_at: Schema.NullOr(Timestamp),
+  expires_at: Schema.NullOr(Timestamp),
+  created_at: Timestamp,
+});
+export type Token = Schema.Schema.Type<typeof Token>;
+
+/**
+ * ── Pagination ──
+ */
+export const PaginationMeta = Schema.Struct({
+  total: Schema.NullOr(Schema.Number),
+  limit: Schema.Number,
+  offset: Schema.Number,
+});
+export type PaginationMeta = Schema.Schema.Type<typeof PaginationMeta>;
+
+export const PaginatedResponse = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
+  Schema.Struct({
+    data: Schema.Array(schema),
+    meta: PaginationMeta,
+  });
+
+export interface PaginatedResponse<T> {
+  readonly data: readonly T[];
+  readonly meta: PaginationMeta;
+}
+
+/**
+ * ── Params & Inputs ──
+ */
+
+export const CreateCheckoutParams = Schema.Struct({
+  amount: Schema.Number.pipe(Schema.greaterThan(0)),
+  currency: Schema.optionalWith(Schema.String, { default: () => "NPR" }),
+  provider: Provider,
   returnUrl: Schema.String,
   cancelUrl: Schema.optional(Schema.String),
-  metadata: Schema.optional(
-    Schema.Record({ key: Schema.String, value: Schema.Any }),
-  ),
+  metadata: Schema.optional(Metadata),
 });
+export type CreateCheckoutParams = Schema.Schema.Type<
+  typeof CreateCheckoutParams
+>;
 
-/**
- * Schema for a checkout session response.
- */
-export const CheckoutSessionSchema = Schema.Struct({
+export const CheckoutSession = Schema.Struct({
   id: CheckoutSessionId,
   checkout_url: Schema.String,
   payment_method: Schema.Struct({
-    type: ProviderSchema,
+    type: Provider,
     url: Schema.optional(Schema.String),
-    method: Schema.optional(
-      Schema.Union(Schema.Literal("GET"), Schema.Literal("POST")),
-    ),
+    method: Schema.optional(Schema.Literal("GET", "POST")),
     fields: Schema.optional(
       Schema.Record({ key: Schema.String, value: Schema.String }),
     ),
   }),
 });
+export type CheckoutSession = Schema.Schema.Type<typeof CheckoutSession>;
 
-/**
- * Schema for a Payment response.
- */
-export const PaymentSchema = Schema.Struct({
-  id: PaymentId,
-  project_id: ProjectId,
-  amount: Schema.Number,
-  currency: Schema.String,
-  status: Schema.Union(
-    Schema.Literal("pending"),
-    Schema.Literal("success"),
-    Schema.Literal("failed"),
-  ),
-  provider_ref: Schema.optional(Schema.NullOr(Schema.String)),
-  metadata_json: Schema.optional(
-    Schema.NullOr(Schema.Record({ key: Schema.String, value: Schema.Any })),
-  ),
-  gateway_response: Schema.optional(
-    Schema.NullOr(Schema.Record({ key: Schema.String, value: Schema.Any })),
-  ),
-  created_at: Schema.String,
-  updated_at: Schema.optional(Schema.String),
+export const CreateCustomerParams = Schema.Struct({
+  merchant_customer_id: Schema.String,
+  email: Schema.optional(Schema.String),
+  name: Schema.optional(Schema.String),
+  phone: Schema.optional(Schema.String),
+  project_id: Schema.optional(ProjectId),
+  metadata: Schema.optional(Metadata),
 });
+export type CreateCustomerParams = Schema.Schema.Type<
+  typeof CreateCustomerParams
+>;
 
-/**
- * Schema for a Project response.
- */
-export const ProjectSchema = Schema.Struct({
-  id: ProjectId,
-  name: Schema.String,
-  api_key_secret: Schema.String,
-  created_at: Schema.String,
+export const ListPaymentsParams = Schema.Struct({
+  limit: Schema.optional(Schema.NumberFromString),
+  offset: Schema.optional(Schema.NumberFromString),
+  projectId: Schema.optional(ProjectId),
 });
+export type ListPaymentsParams = Schema.Schema.Type<typeof ListPaymentsParams>;
+
+export const ListCustomersParams = Schema.Struct({
+  limit: Schema.optional(Schema.NumberFromString),
+  offset: Schema.optional(Schema.NumberFromString),
+  email: Schema.optional(Schema.String),
+  projectId: Schema.optional(ProjectId),
+});
+export type ListCustomersParams = Schema.Schema.Type<
+  typeof ListCustomersParams
+>;
+
+export const UpdateCustomerParams = Schema.Struct({
+  email: Schema.optional(Schema.String),
+  name: Schema.optional(Schema.String),
+  phone: Schema.optional(Schema.String),
+  metadata: Schema.optional(Metadata),
+});
+export type UpdateCustomerParams = Schema.Schema.Type<
+  typeof UpdateCustomerParams
+>;
+
+export const CreateSubscriptionParams = Schema.Struct({
+  customer_id: CustomerId,
+  amount: Schema.Number.pipe(Schema.greaterThan(0)),
+  currency: Schema.optionalWith(Schema.String, { default: () => "NPR" }),
+  interval: SubscriptionInterval,
+  interval_count: Schema.optional(Schema.Number),
+  project_id: Schema.optional(ProjectId),
+  auto_send_link: Schema.optional(Schema.Boolean),
+  metadata: Schema.optional(Metadata),
+});
+export type CreateSubscriptionParams = Schema.Schema.Type<
+  typeof CreateSubscriptionParams
+>;
+
+export const ListSubscriptionsParams = Schema.Struct({
+  limit: Schema.optional(Schema.NumberFromString),
+  offset: Schema.optional(Schema.NumberFromString),
+  projectId: Schema.optional(ProjectId),
+  customerId: Schema.optional(CustomerId),
+  status: Schema.optional(SubscriptionStatus),
+});
+export type ListSubscriptionsParams = Schema.Schema.Type<
+  typeof ListSubscriptionsParams
+>;
 
 /**
- * Higher-order schema for paginated responses.
+ * ── Client Config ──
  */
-export const PaginatedResponseSchema = <A, I>(item: Schema.Schema<A, I>) =>
-  Schema.Struct({
-    data: Schema.Array(item),
-    meta: Schema.Struct({
-      total: Schema.NullOr(Schema.Number),
-      limit: Schema.Number,
-      offset: Schema.Number,
+export const PayArkConfig = Schema.Struct({
+  apiKey: Schema.String,
+  baseUrl: Schema.optional(Schema.String),
+  timeout: Schema.optional(Schema.Number),
+  maxRetries: Schema.optional(Schema.Number),
+  sandbox: Schema.optional(Schema.Boolean),
+});
+export type PayArkConfig = Schema.Schema.Type<typeof PayArkConfig>;
+
+/**
+ * ── Webhooks ──
+ */
+export const WebhookEventType = Schema.Literal(
+  "payment.success",
+  "payment.failed",
+  "subscription.created",
+  "subscription.payment_succeeded",
+  "subscription.payment_failed",
+  "subscription.renewal_due",
+  "subscription.canceled",
+);
+export type WebhookEventType = Schema.Schema.Type<typeof WebhookEventType>;
+
+export const WebhookEvent = Schema.Struct({
+  type: WebhookEventType,
+  id: Schema.optional(Schema.String),
+  data: Schema.Union(
+    Payment,
+    Subscription,
+    Customer,
+    Schema.Struct({
+      id: Schema.String,
+      amount: Schema.optional(Schema.Number),
+      currency: Schema.optional(Schema.String),
+      status: Schema.String,
+      metadata: Schema.optional(Metadata),
     }),
-  });
+  ),
+  is_test: Schema.Boolean,
+  created: Schema.optional(Schema.Number),
+});
+export type WebhookEvent = Schema.Schema.Type<typeof WebhookEvent>;
 
-// ── Inferred Types ─────────────────────────────────────────────────────────
-
-export type CheckoutSession = Schema.Schema.Type<typeof CheckoutSessionSchema>;
-export type Payment = Schema.Schema.Type<typeof PaymentSchema>;
-export type Project = Schema.Schema.Type<typeof ProjectSchema>;
-export interface PaginatedResponse<T> {
-  readonly data: ReadonlyArray<T>;
-  readonly meta: {
-    readonly total: number | null;
-    readonly limit: number;
-    readonly offset: number;
-  };
-}
+/**
+ * ── Error Schemas ──
+ */
+export const PayArkErrorBody = Schema.Struct({
+  error: Schema.String,
+  details: Schema.optional(Schema.Any),
+});
+export type PayArkErrorBody = Schema.Schema.Type<typeof PayArkErrorBody>;

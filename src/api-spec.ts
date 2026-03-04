@@ -5,7 +5,7 @@ import {
   HttpApiMiddleware,
   HttpApiSecurity,
 } from "@effect/platform";
-import * as S from "@payark/sdk/schemas";
+import * as S from "./schemas";
 import { Schema, Context } from "effect";
 
 /**
@@ -66,6 +66,27 @@ export const AuthContext = Context.GenericTag<AuthContext>(
 
 export class SecurityMiddleware extends HttpApiMiddleware.Tag<SecurityMiddleware>()(
   "SecurityMiddleware",
+  {
+    security: {
+      bearer: HttpApiSecurity.bearer,
+    },
+    provides: AuthContext,
+    failure: Schema.Union(AuthenticationError, IndustrialError),
+  },
+) {}
+
+export class CronSecurity extends HttpApiMiddleware.Tag<CronSecurity>()(
+  "CronSecurity",
+  {
+    security: {
+      secret: HttpApiSecurity.apiKey({ in: "header", key: "x-cron-secret" }),
+    },
+    failure: Schema.Union(AuthenticationError, IndustrialError),
+  },
+) {}
+
+export class UserSecurity extends HttpApiMiddleware.Tag<UserSecurity>()(
+  "UserSecurity",
   {
     security: {
       bearer: HttpApiSecurity.bearer,
@@ -156,12 +177,141 @@ export const CustomersGroup = HttpApiGroup.make("customers")
   .prefix("/v1/customers")
   .middleware(SecurityMiddleware);
 
+// ── Subscriptions Group ──────────────────────────────────────────────────
+
+export const SubscriptionsGroup = HttpApiGroup.make("subscriptions")
+  .add(
+    HttpApiEndpoint.post("create", "/")
+      .addSuccess(S.Subscription, { status: 201 })
+      .setPayload(S.CreateSubscriptionParams)
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 })
+      .addError(IndustrialError, { status: 400 })
+      .middleware(SecurityMiddleware),
+  )
+  .add(
+    HttpApiEndpoint.get("retrieve", "/:id")
+      .addSuccess(S.Subscription)
+      .setPath(Schema.Struct({ id: S.SubscriptionId }))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(NotFoundError, { status: 404 })
+      .addError(InternalServerError, { status: 500 })
+      .middleware(SecurityMiddleware),
+  )
+  .add(
+    HttpApiEndpoint.get("list", "/")
+      .addSuccess(S.PaginatedResponse(S.Subscription))
+      .setUrlParams(S.ListSubscriptionsParams)
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 })
+      .middleware(SecurityMiddleware),
+  )
+  .add(
+    HttpApiEndpoint.post("cancel", "/:id/cancel")
+      .addSuccess(S.Subscription)
+      .setPath(Schema.Struct({ id: S.SubscriptionId }))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(NotFoundError, { status: 404 })
+      .addError(InternalServerError, { status: 500 })
+      .middleware(SecurityMiddleware),
+  )
+  .add(
+    HttpApiEndpoint.post("activate", "/:id/activate")
+      .addSuccess(
+        Schema.Struct({
+          checkout_url: Schema.String,
+          payment_id: Schema.String,
+        }),
+      )
+      .setPath(Schema.Struct({ id: S.SubscriptionId }))
+      .setPayload(
+        Schema.Struct({
+          provider: S.Provider,
+          returnUrl: Schema.String,
+          cancelUrl: Schema.optional(Schema.String),
+        }),
+      )
+      .addError(NotFoundError, { status: 404 })
+      .addError(InternalServerError, { status: 500 })
+      .addError(IndustrialError, { status: 400 }),
+  )
+  .prefix("/v1/subscriptions");
+
+// ── Automation Group ─────────────────────────────────────────────────────
+
+export const AutomationGroup = HttpApiGroup.make("automation")
+  .add(
+    HttpApiEndpoint.post("reminders", "/reminders")
+      .addSuccess(
+        Schema.Struct({
+          message: Schema.String,
+          count: Schema.Number,
+        }),
+      )
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .add(
+    HttpApiEndpoint.post("reaper", "/reaper")
+      .addSuccess(
+        Schema.Struct({
+          message: Schema.String,
+          count: Schema.Number,
+        }),
+      )
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .prefix("/v1/automation")
+  .middleware(CronSecurity);
+
+// ── Tokens Group ─────────────────────────────────────────────────────────
+
+export const TokensGroup = HttpApiGroup.make("tokens")
+  .add(
+    HttpApiEndpoint.post("create", "/")
+      .addSuccess(
+        Schema.Struct({
+          ...S.Token.fields,
+          token: Schema.String,
+        }),
+      )
+      .setPayload(
+        Schema.Struct({
+          name: Schema.String,
+          scopes: Schema.optionalWith(Schema.Array(Schema.String), {
+            default: () => [],
+          }),
+          expires_in_days: Schema.optional(Schema.Number),
+        }),
+      )
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .add(
+    HttpApiEndpoint.get("list", "/")
+      .addSuccess(Schema.Array(S.Token))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .add(
+    HttpApiEndpoint.del("delete", "/:id")
+      .setPath(Schema.Struct({ id: S.TokenId }))
+      .addSuccess(Schema.Null)
+      .addError(AuthenticationError, { status: 401 })
+      .addError(NotFoundError, { status: 404 })
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .prefix("/v1/tokens")
+  .middleware(UserSecurity);
+
 // ── Unified API ──────────────────────────────────────────────────────────
 
 export const PayArkApi = HttpApi.make("PayArkApi")
   .add(CheckoutGroup)
   .add(PaymentsGroup)
   .add(CustomersGroup)
+  .add(SubscriptionsGroup)
+  .add(AutomationGroup)
+  .add(TokensGroup)
   .addError(AuthenticationError, { status: 401 })
   .addError(NotFoundError, { status: 404 })
   .addError(ConflictError, { status: 409 })
