@@ -303,6 +303,18 @@ export const TokensGroup = HttpApiGroup.make("tokens")
   .prefix("/v1/tokens")
   .middleware(UserSecurity);
 
+// ── Projects Group ────────────────────────────────────────────────────────
+
+export const ProjectsGroup = HttpApiGroup.make("projects")
+  .add(
+    HttpApiEndpoint.get("list", "/")
+      .addSuccess(Schema.Array(S.Project))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .prefix("/v1/projects")
+  .middleware(SecurityMiddleware);
+
 // ── Unified API ──────────────────────────────────────────────────────────
 
 export const PayArkApi = HttpApi.make("PayArkApi")
@@ -312,6 +324,7 @@ export const PayArkApi = HttpApi.make("PayArkApi")
   .add(SubscriptionsGroup)
   .add(AutomationGroup)
   .add(TokensGroup)
+  .add(ProjectsGroup)
   .addError(AuthenticationError, { status: 401 })
   .addError(NotFoundError, { status: 404 })
   .addError(ConflictError, { status: 409 })
