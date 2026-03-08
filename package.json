@@ -1,6 +1,6 @@
 {
     "name": "@payark/sdk-effect",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Functional, type-safe Effect SDK for the PayArk API.",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
