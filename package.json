@@ -1,6 +1,6 @@
 {
     "name": "@payark/sdk-effect",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "Functional, type-safe Effect SDK for the PayArk API.",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
@@ -12,14 +12,14 @@
             "require": "./dist/index.js"
         },
         "./api-spec": {
-            "types": "./src/api-spec.ts",
-            "import": "./src/api-spec.ts",
-            "default": "./src/api-spec.ts"
+            "types": "./dist/api-spec.d.ts",
+            "import": "./dist/api-spec.mjs",
+            "require": "./dist/api-spec.js"
         },
         "./schemas": {
-            "types": "./src/schemas.ts",
-            "import": "./src/schemas.ts",
-            "default": "./src/schemas.ts"
+            "types": "./dist/schemas.d.ts",
+            "import": "./dist/schemas.mjs",
+            "require": "./dist/schemas.js"
         }
     },
     "files": [
