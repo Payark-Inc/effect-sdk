@@ -25,9 +25,10 @@ export class PayArkEffectError extends Data.TaggedError("PayArkEffectError")<{
   readonly statusCode: number;
   readonly code: PayArkErrorCode;
   readonly raw?: PayArkErrorBody;
+  readonly localizedMessage?: string;
 }> {
   /** Human-readable representation for logging/debugging. */
   override toString(): string {
-    return `[PayArkEffectError: ${this.code}] ${this.message} (HTTP ${this.statusCode})`;
+    return `[PayArkEffectError: ${this.code}] ${this.localizedMessage || this.message} (HTTP ${this.statusCode})`;
   }
 }

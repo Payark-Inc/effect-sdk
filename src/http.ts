@@ -1,4 +1,4 @@
-import { Effect, Context } from "effect";
+import { Effect, Context, Schedule } from "effect";
 import { HttpClient, HttpClientRequest } from "@effect/platform";
 import { PayArkEffectError, type PayArkErrorCode } from "./errors";
 import { PayArkConfig } from "./schemas";
@@ -72,6 +72,7 @@ export const request = <T>(
                 message: `Invalid request body: ${String(e)}`,
                 statusCode: 400,
                 code: "invalid_request_error",
+                localizedMessage: getLocalizedError("invalid_request_error"),
               }),
           ),
         ),
@@ -86,6 +87,7 @@ export const request = <T>(
               message: `Network error: ${e.message}`,
               statusCode: 0,
               code: "connection_error",
+              localizedMessage: getLocalizedError("connection_error"),
             }),
         ),
       ),
@@ -101,6 +103,7 @@ export const request = <T>(
                 message: `Failed to parse response: ${String(e)}`,
                 statusCode: response.status,
                 code: "api_error",
+                localizedMessage: getLocalizedError("api_error"),
               }),
           ),
         ),
@@ -121,10 +124,25 @@ export const request = <T>(
           statusCode: response.status,
           code: mapStatusToCode(response.status),
           raw: errorBody,
+          localizedMessage: getLocalizedError(mapStatusToCode(response.status)),
         }),
       ),
     );
-  });
+  }).pipe(
+    Effect.retry(
+      Schedule.exponential("200 millis").pipe(
+        Schedule.upTo("5 seconds"),
+        // Only retry connection-level or 429/5xx transient errors:
+        Schedule.check((error: PayArkEffectError) => {
+          return (
+            error.code === "connection_error" ||
+            error.code === "rate_limit_error" ||
+            error.statusCode >= 500
+          );
+        }),
+      ),
+    ),
+  );
 
 function mapStatusToCode(status: number): PayArkErrorCode {
   if (status === 401) return "authentication_error";
@@ -134,4 +152,25 @@ function mapStatusToCode(status: number): PayArkErrorCode {
   if (status === 429) return "rate_limit_error";
   if (status >= 500) return "api_error";
   return "unknown_error";
+}
+
+function getLocalizedError(code: PayArkErrorCode): string {
+  switch (code) {
+    case "authentication_error":
+      return "Your API key is missing or invalid. Please check your PayArk credentials.";
+    case "permission_error":
+      return "You don't have permission to perform this action.";
+    case "invalid_request_error":
+      return "The request is missing required parameters or they are invalid. Please check your implementation.";
+    case "not_found_error":
+      return "The requested resource could not be found.";
+    case "rate_limit_error":
+      return "You are making too many requests to PayArk. Please wait a moment before trying again.";
+    case "api_error":
+      return "PayArk servers are currently experiencing issues. Please try again later.";
+    case "connection_error":
+      return "Could not connect to PayArk. Please check your internet connection.";
+    default:
+      return "An unexpected error occurred. Please contact support if the issue persists.";
+  }
 }
