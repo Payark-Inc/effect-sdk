@@ -77,6 +77,15 @@ export type SubscriptionInterval = Schema.Schema.Type<
   typeof SubscriptionInterval
 >;
 
+export const CustomerLifecycle = Schema.Literal(
+  "new",
+  "active",
+  "loyal",
+  "at_risk",
+  "churned",
+);
+export type CustomerLifecycle = Schema.Schema.Type<typeof CustomerLifecycle>;
+
 /**
  * ── Models ──
  */
@@ -89,6 +98,9 @@ export const Customer = Schema.Struct({
   phone: Schema.NullOr(Schema.String),
   project_id: ProjectId,
   metadata: Schema.NullOr(Metadata),
+  total_ltv: Schema.optional(Schema.Number),
+  is_high_value: Schema.optional(Schema.Boolean),
+  lifecycle_stage: Schema.optional(CustomerLifecycle),
   created_at: Timestamp,
   updated_at: Schema.optional(Timestamp),
 });
@@ -97,6 +109,7 @@ export type Customer = Schema.Schema.Type<typeof Customer>;
 export const Payment = Schema.Struct({
   id: PaymentId,
   project_id: ProjectId,
+  customer_id: Schema.optional(Schema.NullOr(CustomerId)),
   amount: Schema.Number,
   currency: Schema.String,
   status: PaymentStatus,
@@ -213,6 +226,7 @@ export const CreateCheckoutParams = Schema.Struct({
   cancelUrl: Schema.optional(V.UrlString),
   metadata: Schema.optional(Metadata),
   subscriptionId: Schema.optional(SubscriptionId),
+  customerId: Schema.optional(CustomerId),
 }).pipe(
   Schema.filter((data) => {
     if (!data.subscriptionId && !data.amount) {
