@@ -320,7 +320,7 @@ export const ProjectsGroup = HttpApiGroup.make("projects")
 export const CallbacksGroup = HttpApiGroup.make("callbacks")
   .add(
     HttpApiEndpoint.get("handle", "/:provider")
-      .addSuccess(Schema.Union(Schema.String, Schema.Null))
+      .addSuccess(Schema.Any)
       .setPath(Schema.Struct({ provider: Schema.String }))
       .setUrlParams(S.CallbackQueryParams)
       .addError(NotFoundError, { status: 404 })
