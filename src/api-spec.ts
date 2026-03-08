@@ -315,6 +315,45 @@ export const ProjectsGroup = HttpApiGroup.make("projects")
   .prefix("/v1/projects")
   .middleware(SecurityMiddleware);
 
+// ── Callbacks Group ──────────────────────────────────────────────────────
+
+export const CallbacksGroup = HttpApiGroup.make("callbacks")
+  .add(
+    HttpApiEndpoint.get("handle", "/:provider")
+      .addSuccess(Schema.Union(Schema.String, Schema.Null))
+      .setPath(Schema.Struct({ provider: Schema.String }))
+      .setUrlParams(S.CallbackQueryParams)
+      .addError(NotFoundError, { status: 404 })
+      .addError(InternalServerError, { status: 500 })
+      .addError(IndustrialError, { status: 400 }),
+  )
+  .prefix("/v1/callback");
+
+// ── Realtime Group ───────────────────────────────────────────────────────
+
+export const RealtimeGroup = HttpApiGroup.make("realtime")
+  .add(
+    HttpApiEndpoint.get("connect", "/")
+      .addSuccess(Schema.Any)
+      .setUrlParams(Schema.Struct({ token: Schema.String }))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .add(
+    HttpApiEndpoint.post("trigger", "/trigger")
+      .addSuccess(
+        Schema.Struct({
+          status: Schema.String,
+          event: Schema.optional(Schema.String),
+        }),
+      )
+      .setPayload(S.RealtimeTriggerPayload)
+      .setUrlParams(Schema.Struct({ token: Schema.optional(Schema.String) }))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .prefix("/v1/realtime");
+
 // ── Unified API ──────────────────────────────────────────────────────────
 
 export const PayArkApi = HttpApi.make("PayArkApi")
@@ -325,6 +364,8 @@ export const PayArkApi = HttpApi.make("PayArkApi")
   .add(AutomationGroup)
   .add(TokensGroup)
   .add(ProjectsGroup)
+  .add(CallbacksGroup)
+  .add(RealtimeGroup)
   .addError(AuthenticationError, { status: 401 })
   .addError(NotFoundError, { status: 404 })
   .addError(ConflictError, { status: 409 })
