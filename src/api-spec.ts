@@ -146,6 +146,14 @@ export const CustomersGroup = HttpApiGroup.make("customers")
       .addError(IndustrialError, { status: 400 }),
   )
   .add(
+    HttpApiEndpoint.get("list", "/")
+      .addSuccess(S.PaginatedResponse(S.Customer))
+      .setUrlParams(S.ListCustomersParams)
+      .addError(AuthenticationError, { status: 401 })
+      .addError(InternalServerError, { status: 500 })
+      .addError(IndustrialError, { status: 400 }),
+  )
+  .add(
     HttpApiEndpoint.get("retrieve", "/:id")
       .addSuccess(S.Customer)
       .setPath(Schema.Struct({ id: S.Id }))

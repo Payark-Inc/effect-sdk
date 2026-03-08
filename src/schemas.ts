@@ -262,6 +262,7 @@ export const ListCustomersParams = Schema.Struct({
   limit: Schema.optional(Schema.NumberFromString),
   offset: Schema.optional(Schema.NumberFromString),
   email: Schema.optional(Schema.String),
+  merchant_customer_id: Schema.optional(Schema.String),
   projectId: Schema.optional(ProjectId),
 });
 export type ListCustomersParams = Schema.Schema.Type<
