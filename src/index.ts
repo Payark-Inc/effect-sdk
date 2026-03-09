@@ -85,5 +85,9 @@ export class PayArk extends Context.Tag("@payark/sdk-effect/PayArk")<
 }
 
 export * from "./api-spec";
-export { PayArkEffectError } from "./errors";
+export {
+  PayArkEffectError,
+  MandateViolationError,
+  MandateExpiredError,
+} from "./errors";
 export * from "./schemas";
