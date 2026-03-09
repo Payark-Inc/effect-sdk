@@ -13,6 +13,10 @@ export const CheckoutSessionId = Schema.String.pipe(
 export const SubscriptionId = Schema.String.pipe(
   Schema.brand("SubscriptionId"),
 );
+export const MandateId = Schema.String.pipe(Schema.brand("MandateId"));
+export const AgentSessionId = Schema.String.pipe(
+  Schema.brand("AgentSessionId"),
+);
 export const CustomerId = Schema.String.pipe(Schema.brand("CustomerId"));
 export const TokenId = Schema.String.pipe(Schema.brand("TokenId"));
 
@@ -21,6 +25,8 @@ export type ProjectId = Schema.Schema.Type<typeof ProjectId>;
 export type PaymentId = Schema.Schema.Type<typeof PaymentId>;
 export type CheckoutSessionId = Schema.Schema.Type<typeof CheckoutSessionId>;
 export type SubscriptionId = Schema.Schema.Type<typeof SubscriptionId>;
+export type MandateId = Schema.Schema.Type<typeof MandateId>;
+export type AgentSessionId = Schema.Schema.Type<typeof AgentSessionId>;
 export type CustomerId = Schema.Schema.Type<typeof CustomerId>;
 export type TokenId = Schema.Schema.Type<typeof TokenId>;
 
@@ -85,6 +91,20 @@ export const CustomerLifecycle = Schema.Literal(
   "churned",
 );
 export type CustomerLifecycle = Schema.Schema.Type<typeof CustomerLifecycle>;
+
+/**
+ * ── AP2 Mandate Enums ──
+ */
+export const MandateType = Schema.Literal("intent", "cart");
+export type MandateType = Schema.Schema.Type<typeof MandateType>;
+
+export const MandateStatus = Schema.Literal(
+  "active",
+  "consumed",
+  "expired",
+  "violated",
+);
+export type MandateStatus = Schema.Schema.Type<typeof MandateStatus>;
 
 /**
  * ── Models ──
@@ -160,6 +180,46 @@ export const Token = Schema.Struct({
 export type Token = Schema.Schema.Type<typeof Token>;
 
 /**
+ * ── AP2 Models ──
+ */
+
+export const Mandate = Schema.Struct({
+  id: MandateId,
+  project_id: ProjectId,
+  customer_id: Schema.NullOr(CustomerId),
+  type: MandateType,
+  status: MandateStatus,
+  principal_id: Schema.String,
+  max_amount: Schema.Number,
+  currency: Schema.String,
+  permitted_vendors: Schema.NullOr(Schema.Array(Schema.String)),
+  valid_from: Timestamp,
+  valid_until: Timestamp,
+  credential_jwt: Schema.String,
+  public_key: Schema.String,
+  signature: Schema.String,
+  parent_mandate_id: Schema.NullOr(MandateId),
+  payment_id: Schema.NullOr(PaymentId),
+  created_at: Timestamp,
+  consumed_at: Schema.NullOr(Timestamp),
+  metadata_json: Metadata,
+});
+export type Mandate = Schema.Schema.Type<typeof Mandate>;
+
+export const AgentSession = Schema.Struct({
+  id: AgentSessionId,
+  project_id: ProjectId,
+  context_id: Schema.String,
+  agent_card_url: V.UrlString,
+  capabilities: Schema.Any,
+  auth_scheme: Schema.Literal("bearer", "mandate"),
+  status: Schema.String,
+  created_at: Timestamp,
+  expires_at: Timestamp,
+});
+export type AgentSession = Schema.Schema.Type<typeof AgentSession>;
+
+/**
  * ── Pagination ──
  */
 export const PaginationMeta = Schema.Struct({
@@ -227,6 +287,7 @@ export const CreateCheckoutParams = Schema.Struct({
   metadata: Schema.optional(Metadata),
   subscriptionId: Schema.optional(SubscriptionId),
   customerId: Schema.optional(CustomerId),
+  mandate_id: Schema.optional(MandateId),
 }).pipe(
   Schema.filter((data) => {
     if (!data.subscriptionId && !data.amount) {

@@ -32,3 +32,32 @@ export class PayArkEffectError extends Data.TaggedError("PayArkEffectError")<{
     return `[PayArkEffectError: ${this.code}] ${this.localizedMessage || this.message} (HTTP ${this.statusCode})`;
   }
 }
+
+/**
+ * Thrown when a transaction violates the bounds of an Intent Mandate.
+ * (e.g., amount too high, vendor not permitted, status already consumed)
+ */
+export class MandateViolationError extends Data.TaggedError(
+  "MandateViolationError",
+)<{
+  readonly message: string;
+  readonly mandateId?: string;
+  readonly raw?: any;
+}> {
+  readonly statusCode = 403;
+  readonly code = "mandate_violation";
+}
+
+/**
+ * Thrown when a mandate is presented outside of its valid time window.
+ */
+export class MandateExpiredError extends Data.TaggedError(
+  "MandateExpiredError",
+)<{
+  readonly message: string;
+  readonly mandateId: string;
+  readonly expiredAt: string;
+}> {
+  readonly statusCode = 410;
+  readonly code = "mandate_expired";
+}

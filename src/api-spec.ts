@@ -48,6 +48,23 @@ export class ConflictError extends Schema.TaggedError<ConflictError>()(
   },
 ) {}
 
+export class MandateViolationError extends Schema.TaggedError<MandateViolationError>()(
+  "MandateViolationError",
+  {
+    error: Schema.String,
+    mandateId: Schema.optional(Schema.String),
+  },
+) {}
+
+export class MandateExpiredError extends Schema.TaggedError<MandateExpiredError>()(
+  "MandateExpiredError",
+  {
+    error: Schema.String,
+    mandateId: S.MandateId,
+    expiredAt: S.Timestamp,
+  },
+) {}
+
 /**
  * PayArk Industrial API Specification.
  * Single source of truth for the entire platform.
@@ -362,6 +379,47 @@ export const RealtimeGroup = HttpApiGroup.make("realtime")
   )
   .prefix("/v1/realtime");
 
+// ── Mandates Group ───────────────────────────────────────────────────────
+
+export const MandatesGroup = HttpApiGroup.make("mandates")
+  .add(
+    HttpApiEndpoint.post("registerIntent", "/intent")
+      .addSuccess(S.Mandate, { status: 201 })
+      .setPayload(
+        Schema.Struct({
+          principal_id: Schema.String,
+          max_amount: Schema.Number,
+          currency: Schema.String,
+          valid_until: S.Timestamp,
+          permitted_vendors: Schema.optional(Schema.Array(Schema.String)),
+          credential_jwt: Schema.String,
+          public_key: Schema.String,
+          customer_id: Schema.optional(S.CustomerId),
+        }),
+      )
+      .addError(AuthenticationError, { status: 401 })
+      .addError(IndustrialError, { status: 400 }),
+  )
+  .add(
+    HttpApiEndpoint.get("retrieve", "/:id")
+      .addSuccess(S.Mandate)
+      .setPath(Schema.Struct({ id: S.MandateId }))
+      .addError(AuthenticationError, { status: 401 })
+      .addError(NotFoundError, { status: 404 }),
+  )
+  .prefix("/v1/mandates")
+  .middleware(SecurityMiddleware);
+
+// ── Discovery Group ──────────────────────────────────────────────────────
+
+export const DiscoveryGroup = HttpApiGroup.make("discovery")
+  .add(
+    HttpApiEndpoint.get("agentCard", "/agent.json")
+      .addSuccess(Schema.Any)
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .prefix("/.well-known");
+
 // ── Unified API ──────────────────────────────────────────────────────────
 
 export const PayArkApi = HttpApi.make("PayArkApi")
@@ -373,9 +431,13 @@ export const PayArkApi = HttpApi.make("PayArkApi")
   .add(TokensGroup)
   .add(ProjectsGroup)
   .add(CallbacksGroup)
+  .add(MandatesGroup)
+  .add(DiscoveryGroup)
   .add(RealtimeGroup)
   .addError(AuthenticationError, { status: 401 })
   .addError(NotFoundError, { status: 404 })
+  .addError(MandateViolationError, { status: 403 })
+  .addError(MandateExpiredError, { status: 410 })
   .addError(ConflictError, { status: 409 })
   .addError(InternalServerError, { status: 500 })
   .addError(IndustrialError, { status: 400 });
