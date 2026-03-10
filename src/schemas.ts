@@ -60,6 +60,7 @@ export type Timestamps = Schema.Schema.Type<typeof Timestamps>;
 export const Provider = Schema.Literal(
   "esewa",
   "khalti",
+  "hamropay",
   "connectips",
   "imepay",
   "fonepay",
@@ -279,7 +280,7 @@ export type WebhookEvent = Schema.Schema.Type<typeof WebhookEvent>;
  */
 
 export const CreateCheckoutParams = Schema.Struct({
-  amount: Schema.optional(V.MinorUnitsInt),
+  amount: Schema.optional(V.NprAmount),
   currency: Schema.optionalWith(Schema.String, { default: () => "NPR" }),
   provider: Provider,
   returnUrl: V.UrlString,
@@ -356,7 +357,7 @@ export type UpdateCustomerParams = Schema.Schema.Type<
 
 export const CreateSubscriptionParams = Schema.Struct({
   customer_id: CustomerId,
-  amount: V.MinorUnitsInt,
+  amount: V.NprAmount,
   currency: Schema.optionalWith(Schema.String, { default: () => "NPR" }),
   interval: SubscriptionInterval,
   interval_count: Schema.optional(Schema.Number),
@@ -372,6 +373,8 @@ export const CallbackQueryParams = Schema.Struct({
   payment_id: Schema.optional(Schema.String),
   data: Schema.optional(Schema.String),
   pidx: Schema.optional(Schema.String),
+  /** HamroPay-specific: the gateway's own transactionId returned on callback. */
+  ref_id: Schema.optional(Schema.String),
 });
 export type CallbackQueryParams = Schema.Schema.Type<
   typeof CallbackQueryParams

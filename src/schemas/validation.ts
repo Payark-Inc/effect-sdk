@@ -22,3 +22,11 @@ export const MinorUnitsInt = Schema.Number.pipe(
   Schema.brand("MinorUnitsInt"),
 );
 export type MinorUnitsInt = Schema.Schema.Type<typeof MinorUnitsInt>;
+
+export const NprAmount = Schema.Number.pipe(
+  Schema.filter(
+    (n) => Number.isFinite(n) && n > 0 && Math.round(n * 100) === n * 100,
+  ),
+  Schema.brand("NprAmount"),
+);
+export type NprAmount = Schema.Schema.Type<typeof NprAmount>;
