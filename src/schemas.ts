@@ -304,6 +304,7 @@ export type CreateCheckoutParams = Schema.Schema.Type<
 export const CheckoutSession = Schema.Struct({
   id: CheckoutSessionId,
   checkout_url: V.UrlString,
+  qr_string: Schema.optional(Schema.String),
   payment_method: Schema.Struct({
     type: Provider,
     url: Schema.optional(V.UrlString),

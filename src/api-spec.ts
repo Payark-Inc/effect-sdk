@@ -16,6 +16,9 @@ export class IndustrialError extends Schema.TaggedError<IndustrialError>()(
   {
     error: Schema.String,
     details: Schema.optional(Schema.Any),
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -23,6 +26,9 @@ export class AuthenticationError extends Schema.TaggedError<AuthenticationError>
   "AuthenticationError",
   {
     error: Schema.String,
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -30,6 +36,9 @@ export class NotFoundError extends Schema.TaggedError<NotFoundError>()(
   "NotFoundError",
   {
     error: Schema.String,
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -38,6 +47,9 @@ export class InternalServerError extends Schema.TaggedError<InternalServerError>
   {
     error: Schema.String,
     details: Schema.optional(Schema.Any),
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -45,6 +57,9 @@ export class ConflictError extends Schema.TaggedError<ConflictError>()(
   "ConflictError",
   {
     error: Schema.String,
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -53,6 +68,9 @@ export class MandateViolationError extends Schema.TaggedError<MandateViolationEr
   {
     error: Schema.String,
     mandateId: Schema.optional(Schema.String),
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -62,6 +80,9 @@ export class MandateExpiredError extends Schema.TaggedError<MandateExpiredError>
     error: Schema.String,
     mandateId: S.MandateId,
     expiredAt: S.Timestamp,
+    code: Schema.optional(Schema.String),
+    doc_url: Schema.optional(Schema.String),
+    suggestion: Schema.optional(Schema.String),
   },
 ) {}
 
@@ -73,7 +94,11 @@ export class MandateExpiredError extends Schema.TaggedError<MandateExpiredError>
 // ── Security ─────────────────────────────────────────────────────────────
 
 export interface AuthContext {
-  readonly project?: { readonly id: string };
+  readonly project?: {
+    readonly id: string;
+    readonly isTestMode: boolean;
+    readonly isEphemeral?: boolean;
+  };
   readonly user?: { readonly id: string };
 }
 
@@ -281,6 +306,7 @@ export const AutomationGroup = HttpApiGroup.make("automation")
         Schema.Struct({
           message: Schema.String,
           count: Schema.Number,
+          purged_projects: Schema.Number,
         }),
       )
       .addError(InternalServerError, { status: 500 }),
@@ -410,6 +436,28 @@ export const MandatesGroup = HttpApiGroup.make("mandates")
   .prefix("/v1/mandates")
   .middleware(SecurityMiddleware);
 
+// ── Sandbox Group ───────────────────────────────────────────────────────
+
+export const SandboxGroup = HttpApiGroup.make("sandbox")
+  .add(
+    HttpApiEndpoint.post("init", "/init")
+      .addSuccess(
+        Schema.Struct({
+          projectId: Schema.String,
+          apiKey: Schema.String,
+          expiresAt: S.Timestamp,
+          session: Schema.optional(
+            Schema.Struct({
+              access_token: Schema.String,
+              refresh_token: Schema.String,
+            }),
+          ),
+        }),
+      )
+      .addError(InternalServerError, { status: 500 }),
+  )
+  .prefix("/v1/sandbox");
+
 // ── Discovery Group ──────────────────────────────────────────────────────
 
 export const DiscoveryGroup = HttpApiGroup.make("discovery")
@@ -434,6 +482,7 @@ export const PayArkApi = HttpApi.make("PayArkApi")
   .add(MandatesGroup)
   .add(DiscoveryGroup)
   .add(RealtimeGroup)
+  .add(SandboxGroup)
   .addError(AuthenticationError, { status: 401 })
   .addError(NotFoundError, { status: 404 })
   .addError(MandateViolationError, { status: 403 })
