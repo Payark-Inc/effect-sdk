@@ -4,7 +4,7 @@ import { PayArkEffectError, type PayArkErrorCode } from "./errors";
 import { PayArkConfig } from "./schemas";
 
 /** SDK version string for runtime introspection. */
-export const SDK_VERSION = "0.1.0" as const;
+export const SDK_VERSION = "0.1.8" as const;
 
 /**
  * Service tag for the PayArk configuration.
